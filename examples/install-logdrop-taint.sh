@@ -53,8 +53,9 @@ mkdir -p "$DIR"
 # repository can. Pinning is what limits that, and it is the customer's move.
 expected_sha() {
   case "$1-$2" in
-    # Filled by the release workflow when a version is published.
-    *) echo "" ;;
+    v0.1.0-linux-x64)   echo "fc9855b99859e04f731ba8abf332fac8cb0249851052607728e6783ad7f73769" ;;
+    v0.1.0-macos-arm64) echo "7eaaf57ceb53351eafb6334dbef665ab7e655d02336176a1362508e09d7dda25" ;;
+    *)                  echo "" ;;
   esac
 }
 EXPECTED="$(expected_sha "$VERSION" "$TARGET")"

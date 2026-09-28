@@ -1,0 +1,117 @@
+name: Self-test
+
+# The action, run against a fixture, on every change to it. Without this the first time
+# anyone finds out the action is broken is in a customer's pipeline - and the analyzer's
+# own CI cannot catch it, because the action lives in a different repository and
+# consumes a published release rather than the source.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: The action scans a fixture and reports what it finds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build a fixture with one of each finding
+        run: |
+          mkdir -p fixture/lib
+          cat > fixture/lib/app.dart <<'EOF'
+          import 'package:flutter/services.dart';
+
+          class Account {
+            Future<void> copy(String recoveryKey) async {
+              await Clipboard.setData(ClipboardData(text: recoveryKey));
+            }
+
+            Future<void> save(String pin) async {
+              await _prefs.setString(_receivePin, pin);
+            }
+
+            void trace(String accessToken) {
+              _logger.info('token: $accessToken');
+            }
+          }
+          EOF
+
+      - name: Run the action
+        id: scan
+        uses: ./
+        with:
+          # No licence secret: the analyzer runs unlicensed in a source build and says
+          # so. This job is about whether the ACTION wires up correctly.
+          license: ""
+          path: fixture
+          repo-root: ${{ github.workspace }}
+          sarif-file: logdrop-taint.sarif
+          # Off: this repository has no Code Scanning setup, and a failed upload would be
+          # noise rather than a signal about the action.
+          upload-sarif: "false"
+
+      - name: The report exists, names its rules, and carries no source
+        run: |
+          test -f logdrop-taint.sarif || { echo "no report written"; exit 1; }
+          python3 - <<'PY'
+          import json, sys
+          d = json.load(open('logdrop-taint.sarif'))
+          run = d['runs'][0]
+          rules = run['tool']['driver']['rules']
+          results = run['results']
+          if not rules:
+              sys.exit('rules[] is empty - the panel counts stats.rules_loaded from it')
+          if len(results) != 3:
+              sys.exit(f'expected 3 findings, got {len(results)}')
+          for r in results:
+              if not r.get('partialFingerprints', {}).get('logdropTaint/v2'):
+                  sys.exit('a finding has no v2 fingerprint - triage cannot survive a rescan')
+          if 'snippet' in json.dumps(d):
+              sys.exit("source reached the report - the customer's code must not travel")
+          print('OK:', len(results), 'findings,', len(rules), 'rules, no snippets')
+          PY
+          test "${{ steps.scan.outputs.findings }}" = "3" \
+            || { echo "findings output was '${{ steps.scan.outputs.findings }}'"; exit 1; }
+
+  gate:
+    name: fail-on turns a green build red, and still writes the report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p fixture/lib
+          printf 'void f(String pin) { _prefs.setString(_receivePin, pin); }\n' > fixture/lib/a.dart
+
+      # The default must stay advisory: a scanner that breaks a pipeline on its own
+      # judgement gets removed from the pipeline.
+      - name: Default is advisory
+        uses: ./
+        with:
+          license: ""
+          path: fixture
+          upload-sarif: "false"
+          sarif-file: advisory.sarif
+
+      - name: fail-on high trips the gate
+        id: gated
+        continue-on-error: true
+        uses: ./
+        with:
+          license: ""
+          path: fixture
+          fail-on: high
+          upload-sarif: "false"
+          sarif-file: gated.sarif
+
+      - name: Assert it tripped AND still reported
+        run: |
+          test "${{ steps.gated.outcome }}" = "failure" \
+            || { echo "expected the gate to fail the step, got '${{ steps.gated.outcome }}'"; exit 1; }
+          test -f gated.sarif || { echo "gate tripped but no report - scan-then-exit is broken"; exit 1; }
+          python3 -c "import json;r=json.load(open('gated.sarif'))['runs'][0];assert r['results'],'gate tripped on an empty report';print('OK: gate tripped,',len(r['results']),'findings still reported')"
