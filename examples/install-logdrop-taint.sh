@@ -62,7 +62,7 @@ expected_sha() {
     v1.0.1-linux-x64)   echo "86cac88961bdeecbf7221072241f149a9d6bd9ab4d30cfb26229261c2a774360" ;;
     v1.0.1-macos-arm64) echo "a638033fa763e12ef3508c0c6addbd291ecfeeb5ad04a0245d939ea6e243e186" ;;
     v1.0.2-linux-x64)   echo "f113d384986281d8c13047e38d171d4dd1543760632e2ac9c887f066617dc165" ;;
-    v1.0.2-macos-arm64) echo "50cc5337967d5265c12049835ef4b6db1ded22b1ceeffe5b6b610e710ad6e9a3" ;;
+    v1.0.2-macos-arm64) echo "934a8850e1b3b896861dc21887161388fd55c7f41a63f280bfbb863c4ba6cb13" ;;
     *)                  echo "" ;;
   esac
 }
