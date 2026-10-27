@@ -2,13 +2,13 @@
 # Installs the LogDrop Flutter taint analyzer: one self-contained binary that needs no
 # Dart SDK, no pub get and none of the project's dependencies.
 #
-#   LOGDROP_VERSION=v1.0.3 LOGDROP_DIR="$HOME/.logdrop" ./install-logdrop-taint.sh
+#   LOGDROP_VERSION=v1.0.4 LOGDROP_DIR="$HOME/.logdrop" ./install-logdrop-taint.sh
 #
 # Used by the GitHub Action and by the CircleCI, GitLab, Jenkins and Bitrise recipes
 # beside it, so every CI system installs the analyzer the same way.
 set -euo pipefail
 
-VERSION="${LOGDROP_VERSION:-v1.0.3}"
+VERSION="${LOGDROP_VERSION:-v1.0.4}"
 DIR="${LOGDROP_DIR:-$HOME/.logdrop}"
 REPO="initialcodess/logdrop-taint-flutter-action"
 
@@ -65,6 +65,8 @@ expected_sha() {
     v1.0.2-macos-arm64) echo "934a8850e1b3b896861dc21887161388fd55c7f41a63f280bfbb863c4ba6cb13" ;;
     v1.0.3-linux-x64)   echo "935cae593ee25ecc233d2d7140e42ffe28835804b0bf7f19e631af9c545ee39b" ;;
     v1.0.3-macos-arm64) echo "f80cf1f6772b2a595c9a405b30b29e2456bec049def75cbcb76170b856a222ba" ;;
+    v1.0.4-linux-x64)   echo "39cdb1be2780bbbf9ec97b630f5d585f48ebe4047d4f60e446840b03b8de467a" ;;
+    v1.0.4-macos-arm64) echo "3c8cef0070ad7a333dc5749b48b21f27d377ae0127327524eb54e700f1199fa7" ;;
     *)                  echo "" ;;
   esac
 }
