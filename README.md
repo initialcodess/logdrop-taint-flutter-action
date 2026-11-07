@@ -23,10 +23,13 @@ summary, and the build stays green — see **The scan is advisory** below.
 | `FL-TAINT-CLIPBOARD` | a recovery key, a TOTP seed or a card number copied to the system clipboard |
 | `FL-TAINT-CREDENTIALS-LOCAL-STORE` | a token or a PIN written to unencrypted `SharedPreferences` |
 | `FL-TAINT-PII-LOG` | a credential reaching a log line, including inside a `${...}` interpolation |
+| `FL-TAINT-WEAK-PASSWORD-HASH` | a password hashed with a fast digest (`md5`, `sha1`, SHA-2) instead of a password KDF (CWE-916) |
+| `FL-STRUCT-EVENT-BOUND-BIOMETRIC` | a `local_auth` success used as a bare yes, with no key bound to biometrics (CWE-287) |
 
-Measured on nine real Flutter applications before any of them was written: **12 findings,
-zero false positives**, every one read in source. The acceptance records live in the
-analyzer repository.
+The first three were measured on nine real Flutter applications before any of them was
+written: **12 findings, zero false positives**, every one read in source. The last two,
+added in v1.1.0, report at `note` level: only `--fail-on low` fails a build on them. The
+acceptance records live in the analyzer repository.
 
 ## Pin by commit SHA, not `@v1`
 
